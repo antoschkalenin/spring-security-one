@@ -1,21 +1,25 @@
 package ru.demo.springsecurityone.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import ru.demo.springsecurityone.model.Role;
 
 /**
+ * Добавляем провайдер DaoAuthenticationProvider для получения пользователей из БД.
+ * Указываем свою реализацию UserDetailsService в конструкторе @Qualifier("userDetailsServiceImpl")
+ * и устанавливаем в провайдере
+ *
  * @EnableGlobalMethodSecurity(prePostEnabled = true) - устанавливаем что глобально во всём приложении
  * у меня security реализованно в методах (@PreAuthorize)
  *
@@ -26,6 +30,13 @@ import ru.demo.springsecurityone.model.Role;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private static final String API_URL = "/api/**";
+    private final UserDetailsService userDetailsService;
+
+    // @Qualifier("userDetailsServiceImpl") указываем свою реализацию userDetails сервиса
+    @Autowired
+    public SecurityConfig(@Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     // Аутентификация  - это возможноть заходить человеку в приложение. Примером аутентификации может быть
     // сравнение пароля, введенного пользователем, с паролем, который сохранен в базе данных сервера.
@@ -74,26 +85,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .logoutSuccessUrl("/auth/login");
     }
 
-    // Переопределяем метод что бы использовать InMemory users
-    // и хранить пользвоателей в приложении.
-    @Bean
+
+    // так же необходимо переопределить стандартный провайдер на
+    // кастомный daoAuthenticationProvider из нашего конфига
     @Override
-    protected UserDetailsService userDetailsService() {
-        // создаем админа с ролью ADMIN, передаём разрешения в authorities
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder().encode("123"))
-                .authorities(Role.ADMIN.getAuthorities())
-                .build();
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
 
-        // создаем админа с ролью USER, передаём разрешения в authorities
-        UserDetails userAnton = User.builder()
-                .username("anton")
-                .password(passwordEncoder().encode("321"))
-                .authorities(Role.USER.getAuthorities())
-                .build();
-
-        return new InMemoryUserDetailsManager(admin,userAnton);
+    // добавляем свой провайдер для получения пользователей из БД
+    @Bean
+    protected DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        // указываем кодировку для паролей
+        provider.setPasswordEncoder(passwordEncoder());
+        // передаём наш написанный сервис для получения пользователя из БД
+        provider.setUserDetailsService(userDetailsService);
+        return provider;
     }
 
     // метод позволяет закодировать пароль с "силой" 12 пароль и получить хэш,
