@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import ru.demo.springsecurityone.model.Role;
 
 /**
@@ -42,8 +43,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // страница будет доступна так же без аутентификации
                 .antMatchers("/").permitAll()
                 // далее каждый запрос (anyRequest) по урлам описанным выше (в данном примере "/api/**") должен быть
-                // аутентифицирован (authenticated) и использовать httpBasic для входа в приложение
-                .anyRequest().authenticated().and().httpBasic();
+                // аутентифицирован (authenticated) и использовать
+                .anyRequest()
+                .authenticated()
+                .and()
+                // formLogin - если доабвить только этот метод то будет использоваться страница авторизации по умолчанию.
+                .formLogin()
+                // loginPage - устанавливаем урл для отображения страницы логина и устанавливаем доступ всем иначе получим ошибку
+                .loginPage("/auth/login").permitAll()
+
+                // Если зашли успешно то перенаправляемся по урлу /auth/success.
+                // Но если мы перед заходом на страницу логина обращались на какой то ранее
+                // авторизованный урл то после авторизации нас перекинет именно туда а не на страницу success,
+                // SS запоминает предыдущую попытку обратиться по урлу если не прошли авторизацию и кинет после успешной авторизации
+                .defaultSuccessUrl("/auth/success")
+
+                // и настроим страницу logout
+                // (по умолчанию он работает по методу GET /logout, что не безопастно (написано в документации SS)
+                .and()
+                .logout()
+                // а именно по урлу "/auth/logout" и с методом POST
+                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout", "POST"))
+                // сделать не валидным сессию
+                .invalidateHttpSession(true)
+                // очистить аутентификацию
+                .clearAuthentication(true)
+                // удаляем куки под названием JSESSIONID
+                .deleteCookies("JSESSIONID")
+                // после выхода перенаправить на страницу логина
+                .logoutSuccessUrl("/auth/login");
     }
 
     // Переопределяем метод что бы использовать InMemory users
