@@ -10,17 +10,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
-/**
- * По умолчанию SS добавляет страницу авторизации.
- * логин: user
- * пароль: можно увидеть при запуске приложения, например:
- * Using generated security password: 46e84b54-4b54-47be-a6fe-f687f4ef8200
- *
- * Так же по умолчанию доступен /logout
- *
- * */
-
 @RestController
 @RequestMapping("api/v1/developers")
 public class DeveloperController {
