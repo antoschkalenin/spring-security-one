@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import ru.demo.springsecurityone.model.Permission;
 import ru.demo.springsecurityone.model.Role;
 
 /**
@@ -38,16 +39,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // страница будет доступна так же без аутентификации
                 .antMatchers("/").permitAll()
 
-                // Далее задаём доступ на урлы только по ролям.
-                // ** - любое что идёи после /api/ должен иметь доступ с определенными ролями.
-                // antMatchers - имеет перегруженные метод и можно указать тип HttpMethod.
-                // hasAnyRole - указывает каким ролям будет доступны данные урлы
-                .antMatchers(HttpMethod.GET, API_URL).hasAnyRole(Role.ADMIN.name(), Role.USER.name())
-
-                // на POST и DELETE доступ имеет только админ
-                // hasRole - принимает одну строку а hasAnyRole строку переменной длины
-                .antMatchers(HttpMethod.POST, API_URL).hasRole(Role.ADMIN.name())
-                .antMatchers(HttpMethod.DELETE, API_URL).hasRole(Role.ADMIN.name())
+                // Вместо работы на основании ролей (hasAnyRole, hasRole) мы используем hasAuthority.
+                // Если у нас будут 50 ролей то в таком подходе нам не нужно будет писать в antMatchers 50 ролей
+                .antMatchers(HttpMethod.GET, API_URL).hasAuthority(Permission.DEVELOPERS_READ.getPermission())
+                .antMatchers(HttpMethod.POST, API_URL).hasAuthority(Permission.DEVELOPERS_WRITE.getPermission())
+                .antMatchers(HttpMethod.DELETE, API_URL).hasAuthority(Permission.DEVELOPERS_WRITE.getPermission())
 
                 // далее каждый запрос (anyRequest) по урлам описанным выше (в данном примере "/api/**") должен быть
                 // аутентифицирован (authenticated) и использовать httpBasic для входа в приложение
@@ -59,18 +55,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     @Override
     protected UserDetailsService userDetailsService() {
-        // создаем админа с ролью ADMIN
+        // создаем админа с ролью ADMIN, передаём разрешения в authorities
         UserDetails admin = User.builder()
                 .username("admin")
                 .password(passwordEncoder().encode("123"))
-                .roles(Role.ADMIN.name())
+                .authorities(Role.ADMIN.getAuthorities())
                 .build();
 
-        // создаем пользователя с ролью USER
+        // создаем админа с ролью USER, передаём разрешения в authorities
         UserDetails userAnton = User.builder()
                 .username("anton")
                 .password(passwordEncoder().encode("321"))
-                .roles(Role.USER.name())
+                .authorities(Role.USER.getAuthorities())
                 .build();
 
         return new InMemoryUserDetailsManager(admin,userAnton);

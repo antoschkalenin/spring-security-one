@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Авторизация пользователей на основании прав (authorities)
+ * */
 @Slf4j
 @RestController
 @RequestMapping("api/v1/developers")
