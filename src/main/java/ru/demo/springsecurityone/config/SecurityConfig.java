@@ -2,7 +2,7 @@ package ru.demo.springsecurityone.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -12,14 +12,17 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import ru.demo.springsecurityone.model.Permission;
 import ru.demo.springsecurityone.model.Role;
 
 /**
+ * @EnableGlobalMethodSecurity(prePostEnabled = true) - устанавливаем что глобально во всём приложении
+ * у меня security реализованно в методах (@PreAuthorize)
+ *
  * @Bean - добавляем для доступности метода, без него метод не будет работать
  * */
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private static final String API_URL = "/api/**";
 
@@ -38,13 +41,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // antMatchers указывает на какие урлы имеет доступ пользователь, permitAll - все пользователи,
                 // страница будет доступна так же без аутентификации
                 .antMatchers("/").permitAll()
-
-                // Вместо работы на основании ролей (hasAnyRole, hasRole) мы используем hasAuthority.
-                // Если у нас будут 50 ролей то в таком подходе нам не нужно будет писать в antMatchers 50 ролей
-                .antMatchers(HttpMethod.GET, API_URL).hasAuthority(Permission.DEVELOPERS_READ.getPermission())
-                .antMatchers(HttpMethod.POST, API_URL).hasAuthority(Permission.DEVELOPERS_WRITE.getPermission())
-                .antMatchers(HttpMethod.DELETE, API_URL).hasAuthority(Permission.DEVELOPERS_WRITE.getPermission())
-
                 // далее каждый запрос (anyRequest) по урлам описанным выше (в данном примере "/api/**") должен быть
                 // аутентифицирован (authenticated) и использовать httpBasic для входа в приложение
                 .anyRequest().authenticated().and().httpBasic();
