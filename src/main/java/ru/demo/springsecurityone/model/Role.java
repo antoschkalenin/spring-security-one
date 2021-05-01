@@ -32,7 +32,7 @@ public enum Role {
     // Теперь SS знает о наших ролях и разрешениях у ролей
     public Set<SimpleGrantedAuthority> getAuthorities() {
         return getPermissions().stream()
-                .map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
+                .map(permission -> new SimpleGrantedAuthority(permission.getPermissionName()))
                 .collect(Collectors.toSet());
     }
 }

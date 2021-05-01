@@ -45,24 +45,28 @@ public class UserDetailsImpl implements UserDetails {
         return username;
     }
 
+    private boolean isActive() {
+        return isActive;
+    }
+
     @Override
     public boolean isAccountNonExpired() {
-        return isActive;
+        return isActive();
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return isActive;
+        return isActive();
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return isActive;
+        return isActive();
     }
 
     @Override
     public boolean isEnabled() {
-        return isActive;
+        return isActive();
     }
 
     // Нужно связать пользователя из БД с пользователем SS в приложении.

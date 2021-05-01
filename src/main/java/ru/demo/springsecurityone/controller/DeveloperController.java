@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping("api/v1/developers")
 public class DeveloperController {
-    private static List<Developer> DEVELOPERS = Stream.of(
+    private static List<Developer> developers = Stream.of(
             new Developer(1L, "Anton", "Klenin"),
             new Developer(2L, "Vlad", "Zhuravlev"),
             new Developer(3L, "Kirill", "Brykin")
@@ -30,13 +30,13 @@ public class DeveloperController {
 
     @GetMapping
     public List<Developer> getALl() {
-        return DEVELOPERS;
+        return developers;
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('developers:read')")
     public Developer getById(@PathVariable Long id) {
-        return DEVELOPERS.stream()
+        return developers.stream()
                 .filter(d -> d.getId().equals(id))
                 .findFirst()
                 .orElse(null);
@@ -48,15 +48,15 @@ public class DeveloperController {
     @PostMapping
     @PreAuthorize("hasAuthority('developers:write')")
     public Developer create(@RequestBody Developer developer) {
-        DEVELOPERS.add(developer);
-        log.info("create developer: {}, state: {}", developer, DEVELOPERS);
+        developers.add(developer);
+        log.info("create developer: {}, state: {}", developer, developers);
         return developer;
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('developers:write')")
     public void deleteById(@PathVariable Long id) {
-        DEVELOPERS.removeIf(d -> d.getId().equals(id));
-        log.info("delete by id: {}, state: {}", id, DEVELOPERS);
+        developers.removeIf(d -> d.getId().equals(id));
+        log.info("delete by id: {}, state: {}", id, developers);
     }
 }
